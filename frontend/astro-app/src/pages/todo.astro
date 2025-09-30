@@ -1,0 +1,300 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout title="Astro - Todo List" currentPage="todo">
+  <div class="container mt-5">
+    <h1 class="mb-4">Todo List</h1>
+
+    <!-- Add Task Form -->
+    <form id="taskForm" class="row g-3 mb-4">
+      <div class="col-md-6">
+        <input type="text" id="taskInput" class="form-control" placeholder="Enter new task" required>
+      </div>
+      <div class="col-md-4">
+        <input type="datetime-local" id="completionDate" class="form-control">
+      </div>
+      <div class="col-md-2">
+        <button type="submit" class="btn btn-primary w-100">Add Task</button>
+      </div>
+    </form>
+
+    <!-- Task List -->
+    <ul id="taskList" class="list-group"></ul>
+  </div>
+</Layout>
+
+<style>
+  .dragging {
+    opacity: 0.5;
+  }
+  .drag-over {
+    border: 2px dashed #007bff;
+  }
+</style>
+
+<script>
+  interface Task {
+    id: number;
+    task: string;
+    completed: boolean;
+    completionDate: string;
+    order: number;
+  }
+
+  const API_URL = "http://localhost:3000/tasks";
+  const taskList = document.getElementById("taskList") as HTMLUListElement;
+  const taskForm = document.getElementById("taskForm") as HTMLFormElement;
+  const taskInput = document.getElementById("taskInput") as HTMLInputElement;
+  const completionDate = document.getElementById("completionDate") as HTMLInputElement;
+
+  let editingTaskId: number | null = null;
+
+  async function fetchTasks() {
+    try {
+      const res = await fetch(API_URL);
+      const tasks = await res.json();
+      renderTasks(tasks);
+    } catch (error) {
+      console.error('Error fetching tasks:', error);
+    }
+  }
+
+  function renderTasks(tasks: Task[]) {
+    if (!taskList) return;
+    taskList.innerHTML = "";
+    tasks.forEach(task => {
+      const li = document.createElement("li");
+      li.className = "list-group-item d-flex justify-content-between align-items-center";
+      li.draggable = true;
+      li.dataset.id = task.id.toString();
+      li.style.cursor = "move";
+
+      if (editingTaskId === task.id) {
+        renderEditForm(li, task);
+      } else {
+        renderTaskContent(li, task);
+      }
+
+      // Drag events
+      li.addEventListener("dragstart", (e) => {
+        li.classList.add("dragging");
+        if (e.dataTransfer) {
+          e.dataTransfer.setData("text/plain", task.id.toString());
+        }
+      });
+      
+      li.addEventListener("dragend", () => {
+        li.classList.remove("dragging");
+      });
+
+      li.addEventListener("dragover", (e) => {
+        e.preventDefault();
+        li.classList.add("drag-over");
+      });
+
+      li.addEventListener("dragleave", () => {
+        li.classList.remove("drag-over");
+      });
+
+      li.addEventListener("drop", async (e) => {
+        e.preventDefault();
+        li.classList.remove("drag-over");
+        
+        const draggedId = e.dataTransfer?.getData("text/plain");
+        if (draggedId && draggedId !== task.id.toString()) {
+          await reorderTasks(parseInt(draggedId), task.id);
+        }
+      });
+
+      taskList.appendChild(li);
+    });
+  }
+
+  function renderTaskContent(li: HTMLLIElement, task: Task) {
+    const content = document.createElement("div");
+    content.className = "flex-grow-1";
+
+    const text = document.createElement("span");
+    text.textContent = `${task.task} (Due: ${new Date(task.completionDate).toLocaleString()})`;
+    if (task.completed) {
+      text.classList.add("text-decoration-line-through");
+    }
+    content.appendChild(text);
+
+    const actions = document.createElement("div");
+
+    // Toggle Complete Button
+    const toggleBtn = document.createElement("button");
+    toggleBtn.className = "btn btn-sm btn-success me-2";
+    toggleBtn.textContent = task.completed ? "Undo" : "Complete";
+    toggleBtn.onclick = () => toggleComplete(task);
+
+    // Edit Button
+    const editBtn = document.createElement("button");
+    editBtn.className = "btn btn-sm btn-warning me-2";
+    editBtn.textContent = "Edit";
+    editBtn.onclick = () => startEdit(task);
+
+    // Delete Button
+    const deleteBtn = document.createElement("button");
+    deleteBtn.className = "btn btn-sm btn-danger";
+    deleteBtn.textContent = "Delete";
+    deleteBtn.onclick = () => deleteTask(task.id);
+
+    actions.appendChild(toggleBtn);
+    actions.appendChild(editBtn);
+    actions.appendChild(deleteBtn);
+
+    li.appendChild(content);
+    li.appendChild(actions);
+  }
+
+  function renderEditForm(li: HTMLLIElement, task: Task) {
+    li.innerHTML = "";
+    li.draggable = false; // Disable dragging while editing
+    li.style.cursor = "default";
+    
+    const form = document.createElement("form");
+    form.className = "d-flex w-100 align-items-center";
+
+    const nameInput = document.createElement("input");
+    nameInput.type = "text";
+    nameInput.className = "form-control me-2";
+    nameInput.value = task.task;
+
+    const dateInput = document.createElement("input");
+    dateInput.type = "datetime-local";
+    dateInput.className = "form-control me-2";
+    dateInput.value = new Date(task.completionDate).toISOString().slice(0,16);
+
+    const saveBtn = document.createElement("button");
+    saveBtn.type = "submit";
+    saveBtn.className = "btn btn-sm btn-primary me-2";
+    saveBtn.textContent = "Save";
+
+    const cancelBtn = document.createElement("button");
+    cancelBtn.type = "button";
+    cancelBtn.className = "btn btn-sm btn-secondary";
+    cancelBtn.textContent = "Cancel";
+    cancelBtn.onclick = () => {
+      editingTaskId = null;
+      fetchTasks();
+    };
+
+    form.appendChild(nameInput);
+    form.appendChild(dateInput);
+    form.appendChild(saveBtn);
+    form.appendChild(cancelBtn);
+
+    form.onsubmit = async (e) => {
+      e.preventDefault();
+      await saveEdit(task.id, nameInput.value.trim(), dateInput.value);
+    };
+
+    li.appendChild(form);
+  }
+
+  async function toggleComplete(task: Task) {
+    try {
+      await fetch(`${API_URL}/${task.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ completed: !task.completed })
+      });
+      fetchTasks();
+    } catch (error) {
+      console.error('Error updating task:', error);
+    }
+  }
+
+  async function deleteTask(id: number) {
+    try {
+      await fetch(`${API_URL}/${id}`, { method: "DELETE" });
+      fetchTasks();
+    } catch (error) {
+      console.error('Error deleting task:', error);
+    }
+  }
+
+  function startEdit(task: Task) {
+    editingTaskId = task.id;
+    fetchTasks();
+  }
+
+  async function saveEdit(id: number, taskName: string, completionDateValue: string) {
+    try {
+      await fetch(`${API_URL}/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          task: taskName,
+          completionDate: completionDateValue
+        })
+      });
+      editingTaskId = null;
+      fetchTasks();
+    } catch (error) {
+      console.error('Error updating task:', error);
+    }
+  }
+
+  async function reorderTasks(draggedId: number, targetId: number) {
+    // Get current order from DOM
+    const listItems = Array.from(taskList.children);
+    const order = listItems.map(item => parseInt((item as HTMLElement).dataset.id || '0'));
+    
+    // Remove dragged item and insert at target position
+    const draggedIndex = order.indexOf(draggedId);
+    const targetIndex = order.indexOf(targetId);
+    
+    if (draggedIndex !== -1 && targetIndex !== -1) {
+      order.splice(draggedIndex, 1);
+      order.splice(targetIndex, 0, draggedId);
+      
+      try {
+        await fetch(`${API_URL}/reorder`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ order })
+        });
+        fetchTasks();
+      } catch (error) {
+        console.error('Error reordering tasks:', error);
+      }
+    }
+  }
+
+  // Initialize
+  document.addEventListener('DOMContentLoaded', () => {
+    fetchTasks();
+
+    if (taskForm) {
+      taskForm.onsubmit = async (e) => {
+        e.preventDefault();
+        const task = taskInput?.value.trim();
+        if (!task) return;
+
+        const newTask = {
+          task,
+          completed: false,
+          completionDate: completionDate?.value || new Date(new Date().getTime() + 24 * 60 * 60 * 1000).toISOString()
+        };
+
+        try {
+          await fetch(API_URL, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(newTask)
+          });
+
+          if (taskInput) taskInput.value = "";
+          if (completionDate) completionDate.value = "";
+          fetchTasks();
+        } catch (error) {
+          console.error('Error adding task:', error);
+        }
+      };
+    }
+  });
+</script>

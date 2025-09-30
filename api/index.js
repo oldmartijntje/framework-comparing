@@ -48,31 +48,31 @@ let tasks = [
     {
         "id": 6,
         "task": "write htmx application",
-        "completed": false,
+        "completed": true,
         "completionDate": new Date(new Date().getTime() + 24 * 60 * 60 * 1000)
     },
     {
         "id": 7,
         "task": "write preact application",
-        "completed": false,
+        "completed": true,
         "completionDate": new Date(new Date().getTime() + 24 * 60 * 60 * 1000)
     },
     {
         "id": 9,
         "task": "write lit application",
-        "completed": false,
+        "completed": true,
         "completionDate": new Date(new Date().getTime() + 24 * 60 * 60 * 1000)
     },
     {
         "id": 10,
         "task": "write solid application",
-        "completed": false,
+        "completed": true,
         "completionDate": new Date(new Date().getTime() + 24 * 60 * 60 * 1000)
     },
     {
         "id": 11,
         "task": "write astro application",
-        "completed": false,
+        "completed": true,
         "completionDate": new Date(new Date().getTime() + 24 * 60 * 60 * 1000)
     },
     {

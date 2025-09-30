@@ -1,0 +1,15 @@
+{
+  "name": "astro-tictactoe-todo",
+  "type": "module",
+  "version": "0.0.1",
+  "scripts": {
+    "dev": "astro dev --port 3008",
+    "build": "astro build",
+    "preview": "astro preview --port 3008",
+    "astro": "astro"
+  },
+  "dependencies": {
+    "astro": "^5.14.1",
+    "bootstrap": "^5.3.2"
+  }
+}
