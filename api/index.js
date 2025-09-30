@@ -6,8 +6,27 @@ const PORT = process.env.PORT || 3000;
 app.use(express.json());
 
 // In-memory storage for tasks
-let tasks = [];
-let nextId = 1;
+let tasks = [
+    {
+        "id": 0,
+        "task": "write api",
+        "completed": true,
+        "completionDate": new Date(new Date().getTime() + 1 * 60 * 60 * 1000)
+    },
+    {
+        "id": 1,
+        "task": "write react application",
+        "completed": false,
+        "completionDate": new Date(new Date().getTime() + 5 * 60 * 60 * 1000)
+    },
+    {
+        "id": 2,
+        "task": "write angular application",
+        "completed": false,
+        "completionDate": new Date(new Date().getTime() + 24 * 60 * 60 * 1000)
+    }
+];
+let nextId = 3;
 
 // Helper function to find task by ID
 const findTaskById = (id) => {
@@ -40,7 +59,7 @@ app.post('/tasks', (req, res) => {
     id: nextId++,
     task: task,
     completed: completed || false,
-    completionDate: completionDate || null
+    completionDate: completionDate || new Date(new Date().getTime() + 24 * 60 * 60 * 1000)
   };
 
   tasks.push(newTask);
