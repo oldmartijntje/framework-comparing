@@ -36,13 +36,13 @@ let tasks = [
     {
         "id": 4,
         "task": "write svelte application",
-        "completed": false,
+        "completed": true,
         "completionDate": new Date(new Date().getTime() + 24 * 60 * 60 * 1000)
     },
     {
         "id": 5,
         "task": "write alpine.js application",
-        "completed": false,
+        "completed": true,
         "completionDate": new Date(new Date().getTime() + 24 * 60 * 60 * 1000)
     },
     {
