@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Framework Comparison - HTMX App</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+</head>
+
+<body hx-boost="true">
+
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/">Tic-Tac-Toe</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" hx-get="/tic-tac-toe" hx-target="#main-content" hx-push-url="true"
+                            href="#tic-tac-toe">
+                            Tic Tac Toe
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" hx-get="/todo" hx-target="#main-content" hx-push-url="true" href="#todo">
+                            Todo List
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content Area -->
+    <div id="main-content">
+        <!-- Tic-Tac-Toe Game (Default) -->
+        <div class="container text-center mt-5">
+            <h1 class="mb-4">Tic-Tac-Toe</h1>
+            <div id="game-board" hx-get="/api/game-state" hx-trigger="load" class="d-grid game-board mx-auto">
+                <!-- Game board will be loaded here -->
+            </div>
+            <p id="game-status" class="mt-3 fs-5">Player X's turn</p>
+            <button class="btn btn-primary mt-3" hx-post="/api/reset-game" hx-target="#game-board" hx-swap="outerHTML">
+                Reset Game
+            </button>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- HTMX Extensions and Custom Logic -->
+    <script>
+        // Mock API responses for HTMX (simulating server-side behavior)
+        let gameState = {
+            board: Array(9).fill(null),
+            currentPlayer: 'X',
+            winner: null,
+            isDraw: false
+        };
+
+        let todoState = {
+            tasks: [],
+            nextId: 1,
+            editingTask: null
+        };
+
+        // Fetch tasks from real API server
+        async function fetchTasksFromAPI() {
+            try {
+                const response = await fetch('http://localhost:3000/tasks');
+                if (response.ok) {
+                    const tasks = await response.json();
+                    todoState.tasks = tasks;
+                    // Update nextId based on existing tasks
+                    todoState.nextId = tasks.length > 0 ? Math.max(...tasks.map(t => t.id)) + 1 : 1;
+                    return true;
+                }
+            } catch (error) {
+                console.log('API server not available, using local state');
+            }
+            return false;
+        }
+
+        // Mock server endpoints using htmx's beforeRequest event
+        document.body.addEventListener('htmx:beforeRequest', function (evt) {
+            const url = evt.detail.requestConfig.path;
+
+            // Intercept and handle mock endpoints
+            if (url.startsWith('/api/') || url === '/tic-tac-toe' || url === '/todo') {
+                evt.preventDefault();
+                handleMockRequest(evt);
+            }
+        });
+
+        async function handleMockRequest(evt) {
+            const url = evt.detail.requestConfig.path;
+            const method = evt.detail.requestConfig.verb;
+            const target = evt.detail.target;
+
+            setTimeout(async () => {
+                let html = '';
+
+                if (url === '/tic-tac-toe') {
+                    html = renderTicTacToe();
+                } else if (url === '/todo') {
+                    html = await renderTodoPage();
+                } else if (url === '/api/game-state') {
+                    html = renderGameBoard();
+                } else if (url === '/api/reset-game') {
+                    resetGame();
+                    html = renderGameBoard();
+                } else if (url.startsWith('/api/move/')) {
+                    const cellIndex = parseInt(url.split('/').pop());
+                    makeMove(cellIndex);
+                    html = renderGameBoard();
+                } else if (url === '/api/todo/add') {
+                    html = await handleAddTodo(evt.detail.requestConfig.parameters);
+                } else if (url.startsWith('/api/todo/toggle/')) {
+                    const taskId = parseInt(url.split('/').pop());
+                    html = await handleToggleTodo(taskId);
+                } else if (url.startsWith('/api/todo/delete/')) {
+                    const taskId = parseInt(url.split('/').pop());
+                    html = await handleDeleteTodo(taskId);
+                } else if (url.startsWith('/api/todo/edit/')) {
+                    const taskId = parseInt(url.split('/').pop());
+                    html = renderEditForm(taskId);
+                } else if (url.startsWith('/api/todo/save/')) {
+                    const taskId = parseInt(url.split('/').pop());
+                    html = await handleSaveTodo(taskId, evt.detail.requestConfig.parameters);
+                } else if (url.startsWith('/api/todo/cancel/')) {
+                    html = renderTodoList();
+                }
+
+                if (target) {
+                    target.innerHTML = html;
+                    htmx.process(target);
+                }
+            }, 50); // Small delay to simulate network request
+        }
+
+        function renderTicTacToe() {
+            return `
+            <div class="container text-center mt-5">
+                <h1 class="mb-4">Tic-Tac-Toe</h1>
+                <div id="game-board" class="d-grid game-board mx-auto">
+                    ${renderGameBoard()}
+                </div>
+                <p id="game-status" class="mt-3 fs-5">${getGameStatus()}</p>
+                <button class="btn btn-primary mt-3" 
+                        hx-post="/api/reset-game"
+                        hx-target="#game-board"
+                        hx-swap="outerHTML">
+                    Reset Game
+                </button>
+            </div>
+        `;
+        }
+
+        function renderGameBoard() {
+            return gameState.board.map((cell, i) =>
+                `<button class="btn btn-outline-dark cell"
+                     ${!cell && !gameState.winner ? `hx-post="/api/move/${i}" hx-target="#game-board" hx-swap="outerHTML"` : ''}
+                     ${!cell && !gameState.winner ? '' : 'disabled'}>
+                ${cell || ''}
+            </button>`
+            ).join('');
+        }
+
+        function makeMove(cellIndex) {
+            if (gameState.board[cellIndex] || gameState.winner) return;
+
+            gameState.board[cellIndex] = gameState.currentPlayer;
+            gameState.winner = checkWinner();
+            gameState.isDraw = !gameState.winner && !gameState.board.includes(null);
+
+            if (!gameState.winner && !gameState.isDraw) {
+                gameState.currentPlayer = gameState.currentPlayer === 'X' ? 'O' : 'X';
+            }
+
+            // Update status
+            const statusEl = document.getElementById('game-status');
+            if (statusEl) {
+                statusEl.textContent = getGameStatus();
+            }
+        }
+
+        function resetGame() {
+            gameState = {
+                board: Array(9).fill(null),
+                currentPlayer: 'X',
+                winner: null,
+                isDraw: false
+            };
+
+            // Update status
+            const statusEl = document.getElementById('game-status');
+            if (statusEl) {
+                statusEl.textContent = getGameStatus();
+            }
+        }
+
+        function checkWinner() {
+            const lines = [
+                [0, 1, 2], [3, 4, 5], [6, 7, 8],
+                [0, 3, 6], [1, 4, 7], [2, 5, 8],
+                [0, 4, 8], [2, 4, 6]
+            ];
+            for (let [a, b, c] of lines) {
+                if (gameState.board[a] && gameState.board[a] === gameState.board[b] && gameState.board[a] === gameState.board[c]) {
+                    return gameState.board[a];
+                }
+            }
+            return null;
+        }
+
+        function getGameStatus() {
+            if (gameState.winner) return `${gameState.winner} wins!`;
+            if (gameState.isDraw) return "It's a draw!";
+            return `Player ${gameState.currentPlayer}'s turn`;
+        }
+
+        async function renderTodoPage() {
+            await fetchTasksFromAPI(); // Load tasks from real API
+            return `
+            <div class="container mt-5">
+                <h1 class="mb-4">Todo List</h1>
+                
+                <!-- Add Task Form -->
+                <form hx-post="/api/todo/add" 
+                      hx-target="#todo-list" 
+                      hx-swap="outerHTML"
+                      class="row g-3 mb-4">
+                    <div class="col-md-6">
+                        <input type="text" name="task" class="form-control" placeholder="Enter new task" required>
+                    </div>
+                    <div class="col-md-4">
+                        <input type="datetime-local" name="completionDate" class="form-control">
+                    </div>
+                    <div class="col-md-2">
+                        <button type="submit" class="btn btn-primary w-100">Add Task</button>
+                    </div>
+                </form>
+
+                <!-- Task List -->
+                <div id="todo-list">
+                    ${renderTodoList()}
+                </div>
+            </div>
+        `;
+        }
+
+        function renderTodoList() {
+            if (todoState.tasks.length === 0) {
+                return '<p class="text-muted">No tasks yet. Add your first task above!</p>';
+            }
+
+            return `
+            <ul class="list-group">
+                ${todoState.tasks.map(task => `
+                    <li class="list-group-item d-flex justify-content-between align-items-center" 
+                        data-id="${task.id}">
+                        ${todoState.editingTask === task.id ? renderEditFormInline(task) : renderTaskView(task)}
+                    </li>
+                `).join('')}
+            </ul>
+        `;
+        }
+
+        function renderTaskView(task) {
+            return `
+            <div class="d-flex w-100 justify-content-between align-items-center">
+                <div class="flex-grow-1">
+                    <span ${task.completed ? 'class="text-decoration-line-through"' : ''}>
+                        ${task.task} (Due: ${new Date(task.completionDate).toLocaleString()})
+                    </span>
+                </div>
+                <div>
+                    <button class="btn btn-sm btn-success me-2"
+                            hx-post="/api/todo/toggle/${task.id}"
+                            hx-target="#todo-list"
+                            hx-swap="outerHTML">
+                        ${task.completed ? 'Undo' : 'Complete'}
+                    </button>
+                    <button class="btn btn-sm btn-warning me-2"
+                            hx-get="/api/todo/edit/${task.id}"
+                            hx-target="#todo-list"
+                            hx-swap="outerHTML">
+                        Edit
+                    </button>
+                    <button class="btn btn-sm btn-danger"
+                            hx-delete="/api/todo/delete/${task.id}"
+                            hx-target="#todo-list"
+                            hx-swap="outerHTML">
+                        Delete
+                    </button>
+                </div>
+            </div>
+        `;
+        }
+
+        function renderEditFormInline(task) {
+            return `
+            <form class="d-flex w-100 align-items-center"
+                  hx-post="/api/todo/save/${task.id}"
+                  hx-target="#todo-list"
+                  hx-swap="outerHTML">
+                <input type="text" name="task" class="form-control me-2" value="${task.task}" required>
+                <input type="datetime-local" name="completionDate" class="form-control me-2" 
+                       value="${new Date(task.completionDate).toISOString().slice(0, 16)}">
+                <button type="submit" class="btn btn-sm btn-primary me-2">Save</button>
+                <button type="button" class="btn btn-sm btn-secondary"
+                        hx-get="/api/todo/cancel/${task.id}"
+                        hx-target="#todo-list"
+                        hx-swap="outerHTML">Cancel</button>
+            </form>
+        `;
+        }
+
+        async function handleAddTodo(params) {
+            const formData = new FormData();
+            params.forEach(param => {
+                formData.append(param.name, param.value);
+            });
+
+            const newTask = {
+                task: formData.get('task'),
+                completed: false,
+                completionDate: formData.get('completionDate') || new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+            };
+
+            // Add to real API first
+            try {
+                const response = await fetch('http://localhost:3000/tasks', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(newTask)
+                });
+
+                if (response.ok) {
+                    // Refresh tasks from API
+                    await fetchTasksFromAPI();
+                } else {
+                    // Fallback to local state
+                    newTask.id = todoState.nextId++;
+                    todoState.tasks.push(newTask);
+                }
+            } catch (error) {
+                // Fallback to local state
+                newTask.id = todoState.nextId++;
+                todoState.tasks.push(newTask);
+            }
+
+            return renderTodoList();
+        }
+
+        async function handleToggleTodo(taskId) {
+            const task = todoState.tasks.find(t => t.id === taskId);
+            if (task) {
+                const newCompletedState = !task.completed;
+
+                // Update API first
+                try {
+                    const response = await fetch(`http://localhost:3000/tasks/${taskId}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ completed: newCompletedState })
+                    });
+
+                    if (response.ok) {
+                        // Refresh tasks from API
+                        await fetchTasksFromAPI();
+                    } else {
+                        // Fallback to local state
+                        task.completed = newCompletedState;
+                    }
+                } catch (error) {
+                    // Fallback to local state
+                    task.completed = newCompletedState;
+                }
+            }
+            return renderTodoList();
+        }
+
+        async function handleDeleteTodo(taskId) {
+            // Delete from API first
+            try {
+                const response = await fetch(`http://localhost:3000/tasks/${taskId}`, {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    // Refresh tasks from API
+                    await fetchTasksFromAPI();
+                } else {
+                    // Fallback to local state
+                    todoState.tasks = todoState.tasks.filter(t => t.id !== taskId);
+                }
+            } catch (error) {
+                // Fallback to local state
+                todoState.tasks = todoState.tasks.filter(t => t.id !== taskId);
+            }
+
+            return renderTodoList();
+        }
+
+        function renderEditForm(taskId) {
+            todoState.editingTask = taskId;
+            return renderTodoList();
+        }
+
+        async function handleSaveTodo(taskId, params) {
+            const formData = new FormData();
+            params.forEach(param => {
+                formData.append(param.name, param.value);
+            });
+
+            const updateData = {
+                task: formData.get('task'),
+                completionDate: formData.get('completionDate')
+            };
+
+            // Update API first
+            try {
+                const response = await fetch(`http://localhost:3000/tasks/${taskId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(updateData)
+                });
+
+                if (response.ok) {
+                    // Refresh tasks from API
+                    await fetchTasksFromAPI();
+                } else {
+                    // Fallback to local state
+                    const task = todoState.tasks.find(t => t.id === taskId);
+                    if (task) {
+                        task.task = updateData.task;
+                        task.completionDate = updateData.completionDate;
+                    }
+                }
+            } catch (error) {
+                // Fallback to local state
+                const task = todoState.tasks.find(t => t.id === taskId);
+                if (task) {
+                    task.task = updateData.task;
+                    task.completionDate = updateData.completionDate;
+                }
+            }
+
+            todoState.editingTask = null;
+            return renderTodoList();
+        }
+
+
+
+        // Initialize navigation active states
+        document.addEventListener('htmx:afterRequest', function (evt) {
+            const navLinks = document.querySelectorAll('.nav-link');
+            navLinks.forEach(link => link.classList.remove('active'));
+
+            if (window.location.hash === '#todo' || evt.detail.requestConfig.path === '/todo') {
+                document.querySelector('[href="#todo"]').classList.add('active');
+            } else {
+                document.querySelector('[href="#tic-tac-toe"]').classList.add('active');
+            }
+        });
+
+        // Set initial active state
+        document.addEventListener('DOMContentLoaded', function () {
+            if (window.location.hash === '#todo') {
+                document.querySelector('[href="#todo"]').click();
+            } else {
+                document.querySelector('[href="#tic-tac-toe"]').classList.add('active');
+            }
+        });
+    </script>
+
+    <style>
+        .game-board {
+            grid-template-columns: repeat(3, 100px);
+            grid-gap: 10px;
+            width: 320px;
+        }
+
+        .cell {
+            width: 100px;
+            height: 100px;
+            font-size: 2rem;
+        }
+    </style>
+
+</body>
+
+</html>

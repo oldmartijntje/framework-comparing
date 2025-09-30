@@ -1,0 +1,17 @@
+{
+  "name": "htmx-app",
+  "version": "1.0.0",
+  "description": "Framework comparison - HTMX version with Tic-Tac-Toe and Todo List",
+  "main": "index.html",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "keywords": ["htmx", "tic-tac-toe", "todo", "framework-comparison"],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "vite": "^7.1.7"
+  }
+}
