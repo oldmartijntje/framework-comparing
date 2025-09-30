@@ -1,0 +1,23 @@
+{
+  "name": "preact-app",
+  "version": "1.0.0",
+  "description": "Framework comparison - Preact version with Tic-Tac-Toe and Todo List",
+  "main": "src/main.jsx",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "keywords": ["preact", "tic-tac-toe", "todo", "framework-comparison"],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "bootstrap": "^5.3.3",
+    "preact": "^10.24.3"
+  },
+  "devDependencies": {
+    "@preact/preset-vite": "^2.9.1",
+    "vite": "^7.1.7"
+  }
+}
