@@ -1,0 +1,22 @@
+{
+  "name": "lit-app",
+  "version": "1.0.0",
+  "description": "Framework comparison - Lit version with Tic-Tac-Toe and Todo List",
+  "main": "src/main.js",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "keywords": ["lit", "web-components", "tic-tac-toe", "todo", "framework-comparison"],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "bootstrap": "^5.3.8",
+    "lit": "^3.2.2"
+  },
+  "devDependencies": {
+    "vite": "^7.1.7"
+  }
+}
