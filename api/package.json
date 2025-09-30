@@ -6,11 +6,16 @@
     "start": "node index.js",
     "dev": "node index.js"
   },
-  "keywords": ["todo", "api", "express"],
+  "keywords": [
+    "todo",
+    "api",
+    "express"
+  ],
   "author": "",
   "license": "ISC",
   "description": "A simple TODO list API built with Node.js and Express",
   "dependencies": {
+    "cors": "^2.8.5",
     "express": "^5.1.0"
   }
 }
