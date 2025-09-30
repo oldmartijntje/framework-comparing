@@ -1,0 +1,16 @@
+{
+  "name": "api",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node index.js"
+  },
+  "keywords": ["todo", "api", "express"],
+  "author": "",
+  "license": "ISC",
+  "description": "A simple TODO list API built with Node.js and Express",
+  "dependencies": {
+    "express": "^5.1.0"
+  }
+}
