@@ -18,125 +18,179 @@ let tasks = [
     {
         "id": 1,
         "task": "write react application",
-        "completed": false,
+        "completed": true,
         "completionDate": new Date(new Date().getTime() + 5 * 60 * 60 * 1000)
     },
     {
         "id": 2,
         "task": "write angular application",
+        "completed": true,
+        "completionDate": new Date(new Date().getTime() + 24 * 60 * 60 * 1000)
+    },
+    {
+        "id": 3,
+        "task": "write vue application",
+        "completed": true,
+        "completionDate": new Date(new Date().getTime() + 24 * 60 * 60 * 1000)
+    },
+    {
+        "id": 4,
+        "task": "write svelte application",
+        "completed": false,
+        "completionDate": new Date(new Date().getTime() + 24 * 60 * 60 * 1000)
+    },
+    {
+        "id": 5,
+        "task": "write alpine.js application",
+        "completed": false,
+        "completionDate": new Date(new Date().getTime() + 24 * 60 * 60 * 1000)
+    },
+    {
+        "id": 6,
+        "task": "write htmx application",
+        "completed": false,
+        "completionDate": new Date(new Date().getTime() + 24 * 60 * 60 * 1000)
+    },
+    {
+        "id": 7,
+        "task": "write preact application",
+        "completed": false,
+        "completionDate": new Date(new Date().getTime() + 24 * 60 * 60 * 1000)
+    },
+    {
+        "id": 9,
+        "task": "write lit application",
+        "completed": false,
+        "completionDate": new Date(new Date().getTime() + 24 * 60 * 60 * 1000)
+    },
+    {
+        "id": 10,
+        "task": "write solid application",
+        "completed": false,
+        "completionDate": new Date(new Date().getTime() + 24 * 60 * 60 * 1000)
+    },
+    {
+        "id": 11,
+        "task": "write astro application",
+        "completed": false,
+        "completionDate": new Date(new Date().getTime() + 24 * 60 * 60 * 1000)
+    },
+    {
+        "id": 12,
+        "task": "write flutter application",
         "completed": false,
         "completionDate": new Date(new Date().getTime() + 24 * 60 * 60 * 1000)
     }
 ];
-let nextId = 3;
+let nextId = 13;
 
 // Helper function to find task by ID
 const findTaskById = (id) => {
-  return tasks.find(task => task.id === parseInt(id));
+    return tasks.find(task => task.id === parseInt(id));
 };
 
 // GET /tasks - Get all tasks
 app.get('/tasks', (req, res) => {
-  res.json(tasks);
+    res.json(tasks);
 });
 
 // GET /tasks/:id - Get a single task by ID
 app.get('/tasks/:id', (req, res) => {
-  const task = findTaskById(req.params.id);
-  if (!task) {
-    return res.status(404).json({ error: 'Task not found' });
-  }
-  res.json(task);
+    const task = findTaskById(req.params.id);
+    if (!task) {
+        return res.status(404).json({ error: 'Task not found' });
+    }
+    res.json(task);
 });
 
 // POST /tasks - Create a new task
 app.post('/tasks', (req, res) => {
-  const { task, completionDate, completed } = req.body;
-  
-  if (!task || typeof task !== 'string') {
-    return res.status(400).json({ error: 'Task description is required and must be a string' });
-  }
+    const { task, completionDate, completed } = req.body;
 
-  const newTask = {
-    id: nextId++,
-    task: task,
-    completed: completed || false,
-    completionDate: completionDate || new Date(new Date().getTime() + 24 * 60 * 60 * 1000)
-  };
+    if (!task || typeof task !== 'string') {
+        return res.status(400).json({ error: 'Task description is required and must be a string' });
+    }
 
-  tasks.push(newTask);
-  res.status(201).json(newTask);
+    const newTask = {
+        id: nextId++,
+        task: task,
+        completed: completed || false,
+        completionDate: completionDate || new Date(new Date().getTime() + 24 * 60 * 60 * 1000)
+    };
+
+    tasks.push(newTask);
+    res.status(201).json(newTask);
 });
 
 // PUT /tasks/:id - Update a task
 app.put('/tasks/:id', (req, res) => {
-  const task = findTaskById(req.params.id);
-  
-  if (!task) {
-    return res.status(404).json({ error: 'Task not found' });
-  }
+    const task = findTaskById(req.params.id);
 
-  const { task: taskDescription, completionDate, completed } = req.body;
-
-  if (taskDescription !== undefined) {
-    if (typeof taskDescription !== 'string') {
-      return res.status(400).json({ error: 'Task description must be a string' });
+    if (!task) {
+        return res.status(404).json({ error: 'Task not found' });
     }
-    task.task = taskDescription;
-  }
 
-  if (completed !== undefined) {
-    task.completed = completed;
-  }
+    const { task: taskDescription, completionDate, completed } = req.body;
 
-  if (completionDate !== undefined) {
-    task.completionDate = completionDate;
-  }
+    if (taskDescription !== undefined) {
+        if (typeof taskDescription !== 'string') {
+            return res.status(400).json({ error: 'Task description must be a string' });
+        }
+        task.task = taskDescription;
+    }
 
-  res.json(task);
+    if (completed !== undefined) {
+        task.completed = completed;
+    }
+
+    if (completionDate !== undefined) {
+        task.completionDate = completionDate;
+    }
+
+    res.json(task);
 });
 
 // DELETE /tasks/:id - Delete a task
 app.delete('/tasks/:id', (req, res) => {
-  const taskIndex = tasks.findIndex(task => task.id === parseInt(req.params.id));
-  
-  if (taskIndex === -1) {
-    return res.status(404).json({ error: 'Task not found' });
-  }
+    const taskIndex = tasks.findIndex(task => task.id === parseInt(req.params.id));
 
-  const deletedTask = tasks.splice(taskIndex, 1)[0];
-  res.json(deletedTask);
+    if (taskIndex === -1) {
+        return res.status(404).json({ error: 'Task not found' });
+    }
+
+    const deletedTask = tasks.splice(taskIndex, 1)[0];
+    res.json(deletedTask);
 });
 
 // PATCH /tasks/reorder - Reorder tasks
 app.patch('/tasks/reorder', (req, res) => {
-  const { order } = req.body;
+    const { order } = req.body;
 
-  if (!Array.isArray(order)) {
-    return res.status(400).json({ error: 'Order must be an array of task IDs' });
-  }
+    if (!Array.isArray(order)) {
+        return res.status(400).json({ error: 'Order must be an array of task IDs' });
+    }
 
-  // Verify all IDs exist
-  const allIdsExist = order.every(id => findTaskById(id));
-  if (!allIdsExist) {
-    return res.status(400).json({ error: 'One or more task IDs not found' });
-  }
+    // Verify all IDs exist
+    const allIdsExist = order.every(id => findTaskById(id));
+    if (!allIdsExist) {
+        return res.status(400).json({ error: 'One or more task IDs not found' });
+    }
 
-  // Verify all tasks are accounted for
-  if (order.length !== tasks.length) {
-    return res.status(400).json({ error: 'Order array must contain all task IDs' });
-  }
+    // Verify all tasks are accounted for
+    if (order.length !== tasks.length) {
+        return res.status(400).json({ error: 'Order array must contain all task IDs' });
+    }
 
-  // Create a map of current tasks
-  const taskMap = new Map(tasks.map(task => [task.id, task]));
+    // Create a map of current tasks
+    const taskMap = new Map(tasks.map(task => [task.id, task]));
 
-  // Reorder tasks based on the provided order
-  tasks = order.map(id => taskMap.get(parseInt(id)));
+    // Reorder tasks based on the provided order
+    tasks = order.map(id => taskMap.get(parseInt(id)));
 
-  res.json(tasks);
+    res.json(tasks);
 });
 
 // Start the server
 app.listen(PORT, () => {
-  console.log(`TODO API server is running on http://localhost:${PORT}`);
+    console.log(`TODO API server is running on http://localhost:${PORT}`);
 });
