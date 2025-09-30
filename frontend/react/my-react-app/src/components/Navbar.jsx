@@ -9,7 +9,7 @@ function Navbar({ currentPage, setCurrentPage }) {
                     href="#"
                     onClick={() => setCurrentPage('tic-tac-toe')}
                 >
-                    Tic-Tac-Toe
+                    React - Tic-Tac-Toe
                 </a>
                 <button
                     className="navbar-toggler"

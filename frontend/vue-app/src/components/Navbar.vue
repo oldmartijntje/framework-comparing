@@ -2,7 +2,7 @@
   <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
     <div class="container-fluid">
       <router-link class="navbar-brand" to="/tic-tac-toe">
-        Tic-Tac-Toe
+        Vue.js - Tic-Tac-Toe
       </router-link>
       <button 
         class="navbar-toggler" 

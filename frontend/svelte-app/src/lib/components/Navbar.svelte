@@ -8,7 +8,7 @@
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
 	<div class="container-fluid">
 		<a class="navbar-brand" href="/tic-tac-toe">
-			Tic-Tac-Toe
+			Svelte - Tic-Tac-Toe
 		</a>
 		<button 
 			class="navbar-toggler" 
