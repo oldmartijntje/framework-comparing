@@ -1,0 +1,14 @@
+<div class="container text-center mt-5">
+    <h1 class="mb-4">Tic-Tac-Toe</h1>
+    <div class="game-board d-grid mx-auto">
+        @for (cell of board; track $index) {
+        <button class="btn btn-outline-dark cell" (click)="handleClick($index)">
+            {{ cell || '' }}
+        </button>
+        }
+    </div>
+    <p class="mt-3 fs-5">{{ status }}</p>
+    <button class="btn btn-primary mt-3" (click)="resetGame()">
+        Reset Game
+    </button>
+</div>
